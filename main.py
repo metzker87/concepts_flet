@@ -26,12 +26,120 @@ class AnimatedBox(UserControl):
 
 
 class UserInputField(UserControl):
-    def __init__(self, icon_name, text_hint, hide):
+    # "Before getting the email extensions, we need to create a paramter in order to select which input field will generate this functionality. The email field will do so, but the password will not."
+    # "Here's one way to set up the logic"
+
+    def __init__(self, icon_name, text_hint, hide, function_emails:bool, function_check:bool):
         self.icon_name = icon_name
         self.text_hint = text_hint
         self.hide = hide
+        self.function_emails = function_emails
+        self.function_check = function_check
         super().__init__()
 
+
+    # Generating the email extension when the user starts typing in his/her email
+    def prefix_email_containers(self):
+        email_labels = ["@gmail.com", "@outlook.com"]
+        label_title = ["GMAIL", "MAIL"]
+        __ = Row(
+            spacing=1,
+            alignment=MainAxisAlignment.END,
+        )
+        for index, label in enumerate(email_labels):
+            # "We will append a container for each email server"
+            __.controls.append(
+                Container(
+                    width=45,
+                    height=30,
+                    alignment=alignment.center,
+                    data=label,
+                    on_click=None, # change later
+                    content=Text(
+                        label_title[index],
+                        size=9,
+                        weight='bold',
+                    ),
+                ),
+            )
+        return Row(
+            vertical_alignment=CrossAxisAlignment.CENTER,
+            alignment=MainAxisAlignment.END,
+            spacing=2,
+            opacity=0, # change to 0
+            animate_opacity=200,
+            offset=transform.Offset(0.35, 0),
+            animate_offset=animation.Animation(400, 'decelerate'),
+            controls=[__]
+        )
+    
+
+    # "Now we can do one to simulate a green OK check mark."
+    # "This can be used during status OK authentication"
+    def off_focus_input_check(self):
+        return Container(
+            opacity=0,
+            offset=transform.Offset(0, 0),
+            animate=200,
+            border_radius=6,
+            width=18,
+            height=18,
+            alignment=alignment.center,
+            content=Checkbox(
+                fill_color="#7df6dd",
+                check_color="black",
+                disabled=True,
+            ),
+        )
+
+
+    def get_prefix_emails(self, e):
+        # "Now in the class instance below, we passed a true for the email and a false for the password"
+        # "Now we can check these booleans here and aonly animate the emails for the true parameters."
+        if self.function_emails: # so if the instance has this as True
+            # get the email value
+            email = self.controls[0].content.controls[1].value
+            # check if user is typing
+            if e.data:
+                if "@gmail.com" in email or "@outlook.com" in email:
+                    # if these names as in the field already, remove the extensions
+                    self.controls[0].content.controls[2].offset = transform.Offset(0, 0)
+                    self.controls[0].content.controls[2].opacity = 0
+                    self.update()
+                else:
+                    # if the above strings are in the field
+                    #  we can animate the extensions visible
+                    self.controls[0].content.controls[2].offset = transform.Offset(-0.15, 0)
+                    self.controls[0].content.controls[2].opacity = 1
+                    self.update()
+            else:
+                self.controls[0].content.controls[2].offset = transform.Offset(0.5, 0)
+                self.controls[0].content.controls[2].opacity = 0
+                self.update()
+        else: # "heref, since the password instance we created has this set to false, the code won't generate the extensions."
+            pass
+
+
+    # "In order to simulate the green checks, we need to follow the same logic as the email extensions"
+    # "First we need to see which fields will have this property"
+    def get_green_check(self, e):
+        if self.function_check:
+            email = self.controls[0].content.controls[1].value
+            password = self.controls[0].content.controls[1].password
+            if email:
+                if "@gmail.com" in email or "@outlook.com" in email or password:
+                    time.sleep(0.5)
+                    self.controls[0].content.controls[3].offset = transform.Offset(-2, 0)
+                    self.controls[0].content.controls[3].opacity = 1
+                    self.update()
+                    time.sleep(0.2)
+                    self.controls[0].content.controls[3].content.value = True
+                    time.sleep(0.1)
+                    self.update()
+                else:
+                    self.controls[0].content.controls[3].offset = transform.Offset(0, 0)
+                    self.controls[0].content.controls[3].opacity = 0
+                    self.update()
     def build(self):
         return Container(
             width=320,
@@ -57,8 +165,15 @@ class UserInputField(UserControl):
                         hint_text=self.text_hint,
                         hint_style=TextStyle(size=11),
                         password=self.hide,
-                        on_change=None, # change later...
+                        on_change=lambda e: self.get_prefix_emails(
+                            e
+                        ),
                         on_blur=None, # also change later...
+                    ),
+                    # "We are gonna display the items here..."
+                    # "in hindsight, these could also be done using a SATCK() widget, but either method works"
+                    self.prefix_email_containers(),
+                    self.off_focus_input_check(),
                 ],
             ),
         )
@@ -170,11 +285,15 @@ def main(page: Page):
                             icons.PERSON_ROUNDED,
                             "Email",
                             False,
+                            True,
+                            True,
                         ),
                         Divider(height=2, color='transparent'),
                         UserInputField(
                             icons.LOCK_OPEN_ROUNDED, 
                             "Password",
+                            True,
+                            False,
                             True,
                         ),
                     ],
