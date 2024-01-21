@@ -4,6 +4,35 @@ import time
 from math import pi
 
 
+class SignInButton(UserControl):
+    def __init__(self, btn_name):
+        self.btn_name = btn_name
+        super().__init__()
+    def build(self):
+        return Container(
+            content=ElevatedButton(
+                content=Text(
+                    self.btn_name,
+                    size=13,
+                    weight='bold',
+                ),
+                style=ButtonStyle(
+                    shape={
+                        "": RoundedRectangleBorder(radius=8),
+                    },
+                    color={
+                        "": "black",
+                    },
+                    bgcolor={
+                        "": "#7df6dd"
+                    },
+                ),
+                height=42,
+                width=320,
+            ),
+        )
+
+
 class AnimatedBox(UserControl):
     def __init__(self, border_color, bg_color, rotate_angle):
         # "Create isntances for each paramter"
@@ -38,6 +67,18 @@ class UserInputField(UserControl):
         super().__init__()
 
 
+    # function to fill in email extension
+    def return_email_prefix(self, e):
+        email = self.controls[0].content.controls[1].value
+        if e.control.data in email:
+            pass
+        else:
+            self.controls[0].content.controls[1].value += e.control.data
+            self.controls[0].content.controls[2].offset = transform.Offset(0.5, 0)
+            self.controls[0].content.controls[2].opacity = 0
+            self.update()
+
+
     # Generating the email extension when the user starts typing in his/her email
     def prefix_email_containers(self):
         email_labels = ["@gmail.com", "@outlook.com"]
@@ -54,7 +95,7 @@ class UserInputField(UserControl):
                     height=30,
                     alignment=alignment.center,
                     data=label,
-                    on_click=None, # change later
+                    on_click=lambda e: self.return_email_prefix(e), # change later
                     content=Text(
                         label_title[index],
                         size=9,
@@ -73,6 +114,8 @@ class UserInputField(UserControl):
             controls=[__]
         )
     
+
+    # 
 
     # "Now we can do one to simulate a green OK check mark."
     # "This can be used during status OK authentication"
@@ -140,6 +183,10 @@ class UserInputField(UserControl):
                     self.controls[0].content.controls[3].offset = transform.Offset(0, 0)
                     self.controls[0].content.controls[3].opacity = 0
                     self.update()
+        else:
+            pass
+
+
     def build(self):
         return Container(
             width=320,
@@ -168,7 +215,7 @@ class UserInputField(UserControl):
                         on_change=lambda e: self.get_prefix_emails(
                             e
                         ),
-                        on_blur=None, # also change later...
+                        on_blur=lambda e: self.get_green_check(e), # also change later...
                     ),
                     # "We are gonna display the items here..."
                     # "in hindsight, these could also be done using a SATCK() widget, but either method works"
@@ -296,6 +343,23 @@ def main(page: Page):
                             False,
                             True,
                         ),
+                        Divider(height=2, color='transparent'),
+                        Row(
+                            width=320,
+                            alignment=MainAxisAlignment.END,
+                            controls=[
+                                Text('Forgot Password?', size=8.5),
+                            ],
+                        ),
+                        Divider(height=45, color='transparent'),
+                        # button for sign in 
+                        SignInButton('Sign In'),
+                        Divider(height=45, color='transparent'),
+                        Text(
+                            'Footer text goes in here.',
+                            size=10,
+                            color='white54',
+                        ),
                     ],
                 ),
             ),
@@ -305,4 +369,5 @@ def main(page: Page):
     animate_boxes()
 
 if __name__ == "__main__":
-    flet.app(target=main)
+    # Configure my local server to use port 5000 for the web browser view
+    flet.app(target=main, view=flet.AppView.WEB_BROWSER, port=5000)
